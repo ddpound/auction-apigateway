@@ -1,1 +1,5 @@
 rootProject.name = 'auction-apigateway'
+
+include':module-common'
+
+project(':module-common').projectDir = new File(settingsDir,'../module-common')
