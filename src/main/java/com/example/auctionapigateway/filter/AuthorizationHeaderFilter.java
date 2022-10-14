@@ -2,20 +2,21 @@ package com.example.auctionapigateway.filter;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.auctionapigateway.jwtutil.JWTUtil;
+import com.example.modulecommon.makefile.MakeFile;
 import com.example.modulecommon.model.UserModel;
 import com.example.modulecommon.repository.JwtSuperintendRepository;
 import com.example.modulecommon.repository.UserModelRepository;
-import lombok.RequiredArgsConstructor;
+
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.HttpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 
-import org.springframework.context.annotation.Bean;
+
 import org.springframework.http.HttpStatus;
 
-import org.springframework.http.server.ServletServerHttpResponse;
+
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
@@ -44,6 +45,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
         this.jwtUtil = jwtUtil;
         this.jwtSuperintendRepository = jwtSuperintendRepository;
         this.userModelRepository = userModelRepository;
+
     }
 
     @Override
