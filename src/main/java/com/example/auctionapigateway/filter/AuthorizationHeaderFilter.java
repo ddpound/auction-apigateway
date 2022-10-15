@@ -1,7 +1,7 @@
 package com.example.auctionapigateway.filter;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.example.auctionapigateway.jwtutil.JWTUtil;
+import com.example.modulecommon.jwtutil.JWTUtil;
 import com.example.modulecommon.makefile.MakeFile;
 import com.example.modulecommon.model.UserModel;
 import com.example.modulecommon.repository.JwtSuperintendRepository;
@@ -52,6 +52,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
     public GatewayFilter apply(Config config) {
         return ((exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
+
 
             if(!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)){
                 return onError(exchange,"no authorization header", HttpStatus.UNAUTHORIZED);
@@ -125,11 +126,14 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                 if(resultMapToken.containsKey(-2)){
                     return onError(exchange,"API GATEWAY The token has expired", HttpStatus.UNAUTHORIZED);
                 }
+
+                // 문제 없이 여기까지왔다면 통과
+                log.info("success check api gateway AuthorizationHeader Filter");
+                return chain.filter(exchange);
+
             }
 
-
-            // 문제 없이 여기까지왔다면 통과
-            return chain.filter(exchange);
+            return onError(exchange,"Filter Error", HttpStatus.UNAUTHORIZED);
         });
     }
 
