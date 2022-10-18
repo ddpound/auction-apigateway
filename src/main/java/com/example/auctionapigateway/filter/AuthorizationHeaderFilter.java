@@ -1,11 +1,9 @@
 package com.example.auctionapigateway.filter;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.example.auctionapigateway.repository.JwtSuperintendRepository;
 import com.example.modulecommon.jwtutil.JWTUtil;
 import com.example.modulecommon.makefile.MakeFile;
-import com.example.modulecommon.model.UserModel;
-import com.example.modulecommon.repository.JwtSuperintendRepository;
-import com.example.modulecommon.repository.UserModelRepository;
 
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.HttpHeaders;
@@ -31,21 +29,16 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
     private final JWTUtil jwtUtil;
 
-    private final UserModelRepository userModelRepository;
-
     private final JwtSuperintendRepository jwtSuperintendRepository;
 
     public static class Config{}
 
     @Autowired
     public AuthorizationHeaderFilter(JWTUtil jwtUtil,
-                                     UserModelRepository userModelRepository,
                                      JwtSuperintendRepository jwtSuperintendRepository){
         super(Config.class);
         this.jwtUtil = jwtUtil;
         this.jwtSuperintendRepository = jwtSuperintendRepository;
-        this.userModelRepository = userModelRepository;
-
     }
 
     @Override
@@ -95,9 +88,9 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
                         // 리프레시 토큰, 액세스 토큰 다 DB검색
                         // 디비에 한쌍으로 검색, 만약 없다면 누가 탈취해서 임의로 값을 넣은걸 의심
-                        UserModel userModel = jwtSuperintendRepository.findByAccessTokenAndRefreshToken(jwtHeader,reFreshJwtHeader).getUser();
+                        String findUsername = jwtSuperintendRepository.findByAccessTokenAndRefreshToken(jwtHeader,reFreshJwtHeader).getUsername();
 
-                        String newAccessToken = jwtUtil.makeAuthToken(userModel);
+                        String newAccessToken = jwtUtil.makeAuthToken(findUsername);
 
                         //리프레시까지 다시 재발급이아니라 액세스만 재발급해서 다시 DB한쌍에 저장
                         //String newRefreshToken = loginFilterJWTUtil.makeRfreshToken(userModel);
@@ -110,7 +103,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                         jwtSuperintendRepository
                                 .updateAcToken(
                                         newAccessToken,
-                                        userModel
+                                        findUsername
                                 );
                         resultMapToken = jwtUtil.returnMapMyTokenVerify(newAccessToken);
                     }
@@ -118,8 +111,6 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                     // claim 안에 refresh가 있는지 체크해주기
 
                     username  = resultMapToken.get(1).getClaim("username").asString();
-
-                    UserModel userModel =  userModelRepository.findByUsername(username);
 
                 }
                 // 여기서 만약 또 리프레시마저 만료라면 재 로그인 시도를 유도해야함
