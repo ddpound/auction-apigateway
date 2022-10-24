@@ -1,9 +1,9 @@
 package com.example.auctionapigateway.filter;
 
+import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.auctionapigateway.repository.JwtSuperintendRepository;
 import com.example.modulecommon.jwtutil.JWTUtil;
-import com.example.modulecommon.makefile.MakeFile;
 
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.HttpHeaders;
@@ -45,6 +45,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
     public GatewayFilter apply(Config config) {
         return ((exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
+            ServerHttpResponse response = exchange.getResponse();
 
 
             if(!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)){
@@ -70,8 +71,6 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
                 // -1 즉 토큰 검증이 실패했을 때
                 if(resultMapToken.containsKey(-1)){
-                    // 리프레시 토큰 검증 시작, 값 변경
-                    resultMapToken = jwtUtil.returnMapMyTokenVerify(reFreshJwtHeader);
                     return onError(exchange,"[API GATEWAY] Token authentication failed.", HttpStatus.UNAUTHORIZED);
                 }
 
@@ -89,9 +88,20 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
                             // 리프레시 토큰, 액세스 토큰 다 DB검색
                             // 디비에 한쌍으로 검색, 만약 없다면 누가 탈취해서 임의로 값을 넣은걸 의심
-                            String findUsername = jwtSuperintendRepository.findByAccessTokenAndRefreshToken(jwtHeader,reFreshJwtHeader).getUsername();
+                            String findUsername;
+                            try{
+                                findUsername = jwtSuperintendRepository.findByAccessTokenAndRefreshToken(jwtHeader,reFreshJwtHeader).getUsername();
+                            }catch (NullPointerException e){
+                                log.error(e);
+                                return onError(exchange,"db not found token,refreshToken", HttpStatus.FORBIDDEN);
+                            }
 
-                            String newAccessToken = jwtUtil.makeAuthToken(findUsername,resultMapToken.get(1).getClaim("userId").asInt());
+                            String newAccessToken = jwtUtil.makeAuthToken(findUsername, JWT.decode(jwtHeader).getClaim("userId").asInt());
+
+                            log.info("api gateway JWT FILTER , REFRESH TOKEN EXPIRED AND NEW MAKE TOKEN");
+
+                            response.getHeaders().add(HttpHeaders.AUTHORIZATION,"Bearer "+ newAccessToken);
+                            response.getHeaders().add("RefreshToken","Bearer "+ reFreshJwtHeader);
 
                             // 여기서 새로운 토큰을 만들어주고 새로 생성
                             jwtSuperintendRepository
@@ -100,6 +110,11 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                                             findUsername
                                     );
                             resultMapToken = jwtUtil.returnMapMyTokenVerify(newAccessToken);
+
+                            if(resultMapToken.containsKey(1)) {
+                                log.info("success check api gateway AuthorizationHeader Filter");
+                                return chain.filter(exchange);
+                            }
                         }
                     }
                     // 여기서 만약 또 리프레시마저 만료라면 재 로그인 시도를 유도해야함

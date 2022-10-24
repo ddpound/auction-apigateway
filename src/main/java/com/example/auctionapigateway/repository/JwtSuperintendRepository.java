@@ -12,7 +12,10 @@ public interface JwtSuperintendRepository extends JpaRepository<JwtSuperintendMo
 
     JwtSuperintendModel findByUsername(String user);
 
-    JwtSuperintendModel findByAccessTokenAndRefreshToken(String AccessToken, String RefreshToken);
+
+    JwtSuperintendModel findByAccessTokenAndRefreshToken(String accessToken, String refreshToken);
+
+
 
     void deleteByUsername(String user);
 

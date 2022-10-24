@@ -28,15 +28,17 @@ public class JwtService {
     @Transactional
     public int saveCheckTokenRepository(Map<String,Object> body){
 
-        JwtSuperintendModel findJwtSuperintendModel = jwtSuperintendRepository.findByUsername((body.get("username").toString()));
+        JwtSuperintendModel findJwtSuperintendModel = jwtSuperintendRepository.findByUsername((body.get("username").toString().replaceAll("[\\[|\\]]","")));
 
-        log.info(String.valueOf(body.get("mytoken")));
+
 
         String token =  String.valueOf(body.get("mytoken")).replaceAll("[\\[|\\]]","");
         String refreshToken = String.valueOf(body.get("RefreshToken")).replaceAll("[\\[|\\]]","");
         String servertoken =  String.valueOf(body.get("ServerToken")).replaceAll("[\\[|\\]]","");
 
-        if (token ==null || refreshToken ==null || servertoken ==null){
+        log.info("SAVECHCEKTOKEN TRY LOGIN");
+
+        if (token.length() == 0  || refreshToken.length() == 0 || servertoken.length() == 0){
             return -1;
         }else{
 
@@ -54,7 +56,7 @@ public class JwtService {
                 }else{
                     // 처음이라면 새로저장
                     JwtSuperintendModel jwtSuperintendModel = JwtSuperintendModel.builder()
-                            .username(body.get("username").toString())
+                            .username(body.get("username").toString().replaceAll("[\\[|\\]]",""))
                             .accessToken(token)
                             .refreshToken(refreshToken)
                             .build();

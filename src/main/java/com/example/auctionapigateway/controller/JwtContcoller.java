@@ -33,7 +33,7 @@ public class JwtContcoller {
 
         int resultNum = jwtService.saveCheckTokenRepository(body);
 
-        System.out.println(resultNum);
+        //System.out.println(resultNum);
 
         return "success token";
     }
