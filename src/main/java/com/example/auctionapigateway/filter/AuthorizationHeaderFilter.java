@@ -93,7 +93,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                                 findUsername = jwtSuperintendRepository.findByAccessTokenAndRefreshToken(jwtHeader,reFreshJwtHeader).getUsername();
                             }catch (NullPointerException e){
                                 log.error(e);
-                                return onError(exchange,"db not found token,refreshToken", HttpStatus.FORBIDDEN);
+                                return onError(exchange,"db not found token,refreshToken", HttpStatus.UNAUTHORIZED);
                             }
 
                             String newAccessToken = jwtUtil.makeAuthToken(findUsername, JWT.decode(jwtHeader).getClaim("userId").asInt());
@@ -111,10 +111,8 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                                     );
                             resultMapToken = jwtUtil.returnMapMyTokenVerify(newAccessToken);
 
-                            if(resultMapToken.containsKey(1)) {
-                                log.info("success check api gateway AuthorizationHeader Filter");
-                                return chain.filter(exchange);
-                            }
+                            log.info("success checkfilter and new Token making : " +  findUsername);
+                            return chain.filter(exchange);
                         }
                     }
                     // 여기서 만약 또 리프레시마저 만료라면 재 로그인 시도를 유도해야함
