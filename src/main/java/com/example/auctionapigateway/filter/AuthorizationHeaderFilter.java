@@ -93,7 +93,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                                 findUsername = jwtSuperintendRepository.findByAccessTokenAndRefreshToken(jwtHeader,reFreshJwtHeader).getUsername();
                             }catch (NullPointerException e){
                                 log.error(e);
-                                return onError(exchange,"db not found token,refreshToken", HttpStatus.UNAUTHORIZED);
+                                return onError(exchange,"db not found token,refreshToken fail filter Check", HttpStatus.FORBIDDEN);
                             }
 
                             String newAccessToken = jwtUtil.makeAuthToken(findUsername, JWT.decode(jwtHeader).getClaim("userId").asInt());
@@ -117,21 +117,21 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                     }
                     // 여기서 만약 또 리프레시마저 만료라면 재 로그인 시도를 유도해야함
                     if(resultMapToken.containsKey(-2)){
-                        return onError(exchange,"API GATEWAY The token has expired", HttpStatus.UNAUTHORIZED);
+                        return onError(exchange,"API GATEWAY The RefreshToken has expired", HttpStatus.FORBIDDEN);
                     }
                 }else if(resultMapToken.containsKey(1)) {
                     //만료가 아니고 값이 잘 들어왔다면
                     // 문제 없이 여기까지왔다면 통과
-                    log.info("success check api gateway AuthorizationHeader Filter");
+                    log.info("[AuthorizationHeader Filter] This Token is success Authorization");
                     return chain.filter(exchange);
 
                 }
 
-                return onError(exchange,"Filter Error", HttpStatus.UNAUTHORIZED);
+                return onError(exchange,"Filter Error", HttpStatus.FORBIDDEN);
 
             }
 
-            return onError(exchange,"Filter Error", HttpStatus.UNAUTHORIZED);
+            return onError(exchange,"Filter Error", HttpStatus.FORBIDDEN);
         });
     }
 
