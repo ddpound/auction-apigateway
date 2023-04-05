@@ -3,8 +3,8 @@ package com.example.auctionapigateway.filter;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.auctionapigateway.repository.JwtSuperintendRepository;
-import com.example.modulecommon.jwtutil.JWTUtil;
 
+import com.example.modulecommon.jwtutil.JWTUtil;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.HttpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
