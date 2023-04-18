@@ -28,8 +28,6 @@ public class JwtService {
 
         JwtSuperintendModel findJwtSuperintendModel = jwtSuperintendRepository.findByUsername((body.get("username").toString().replaceAll("[\\[|\\]]","")));
 
-
-
         String token =  String.valueOf(body.get("mytoken")).replaceAll("[\\[|\\]]","");
         String refreshToken = String.valueOf(body.get("RefreshToken")).replaceAll("[\\[|\\]]","");
         String servertoken =  String.valueOf(body.get("ServerToken")).replaceAll("[\\[|\\]]","");
