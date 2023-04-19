@@ -18,7 +18,7 @@ public class PreFlightCorsConfiguration {
 
     private static final String ALLOWED_HEADERS = "x-requested-with,authorization," +
             "refreshtoken,serverToken,Access-Control-Allow-Origin,Content-Type," +
-            "credential,X-AUTH-TOKEN,X-CSRF-TOKEN";
+            "credential,X-AUTH-TOKEN,X-CSRF-TOKEN,Cookie";
 
     private static final String ALLOWED_METHODS = "GET, PUT, POST, DELETE, OPTIONS";
 
@@ -28,7 +28,7 @@ public class PreFlightCorsConfiguration {
 
     // 중요 해당 헤더가 없다면 axios를 통한 프론트에서 확인이 불가능함
     private static final String EXPOSE_HEADERS = "*,Authorization,Refreshtoken," +
-            "ServerToken";
+            "ServerToken,Cookie";
 
     private static final String MAX_AGE = "3600";
 
@@ -45,6 +45,7 @@ public class PreFlightCorsConfiguration {
                 ServerHttpResponse response = ctx.getResponse();
 
                 HttpHeaders headers = response.getHeaders();
+
 
                 headers.add("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
 

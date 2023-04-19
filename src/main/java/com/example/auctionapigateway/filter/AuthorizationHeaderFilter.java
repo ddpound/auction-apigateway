@@ -12,6 +12,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 
 
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpStatus;
 
 
@@ -21,7 +22,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 @Log4j2
@@ -31,6 +35,10 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
     private final JwtSuperintendRepository jwtSuperintendRepository;
 
+    private final String JWT_COOKIE_NAME;
+
+    private final String REFRESH_COOKIE_NAME;
+
     public static class Config{}
 
     @Autowired
@@ -39,6 +47,8 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
         super(Config.class);
         this.jwtUtil = jwtUtil;
         this.jwtSuperintendRepository = jwtSuperintendRepository;
+        JWT_COOKIE_NAME = "token";
+        REFRESH_COOKIE_NAME = "refreshtoken";
     }
 
     @Override
@@ -46,6 +56,8 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
         return ((exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
             ServerHttpResponse response = exchange.getResponse();
+
+
 
 
             if(!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)){
@@ -61,6 +73,17 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                 log.info("This request have not token");
             }else{
                 log.info("API GATEWAY JWTCheckFilter has been activated.");
+
+                // 쿠키 추가부분
+                try {
+                    Map<String, String> tokens = getTokenFromCookie(request);
+                    System.out.println("쿠키토큰 결과값");
+                    System.out.println(tokens.get(JWT_COOKIE_NAME));
+                    System.out.println(tokens.get(REFRESH_COOKIE_NAME));
+                    System.out.println(tokens.values());
+                }catch (Exception e){
+                    log.error(e);
+                }
 
                 String jwtHeader = autorizationHeader.replace("Bearer ","");
                 reFreshJwtHeader = reFreshJwtHeader.replace("Bearer ", "");
@@ -143,4 +166,50 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
         log.error(errMassage);
         return response.setComplete();
     }
+
+    private Map<String, String> getTokenFromCookie(ServerHttpRequest request) {
+        Map<String, String> returnHashMap = new HashMap<>();
+
+        org.springframework.http.HttpHeaders headers = request.getHeaders();
+        List<String> JWTcookes = headers.get("Cookie");
+
+        HttpCookie cookie = request.getCookies().getFirst(JWT_COOKIE_NAME);
+        HttpCookie Refreshcookies = request.getCookies().getFirst(REFRESH_COOKIE_NAME);
+
+        System.out.println("내가만든ㄱ쿠키~");
+        System.out.println(request);
+        System.out.println(request.getHeaders().values());
+        System.out.println(request.getMethod());
+        System.out.println(request.getCookies());
+        System.out.println();
+        request.getCookies().values().stream()
+                .map(httpCookies -> {
+                    return httpCookies.stream().map(httpCookie -> {
+                        String cookieName = httpCookie.getName();
+                        String cookieValue = cookie.getValue();
+                        System.out.println("회전값 작동 유무");
+                        System.out.println(cookieName);
+                        System.out.println(cookieValue);
+                        return null;
+                    });
+                });
+
+        System.out.println(Objects.requireNonNull(cookie).getValue());
+        System.out.println(Objects.requireNonNull(Refreshcookies).getValue());
+
+
+        if (cookie != null) {
+
+            returnHashMap.put(JWT_COOKIE_NAME, cookie.getValue());
+
+            if (Refreshcookies != null) {
+                returnHashMap.put(REFRESH_COOKIE_NAME, Refreshcookies.getValue());
+            }
+
+            return returnHashMap;
+        }
+
+        return null;
+    }
+
 }
