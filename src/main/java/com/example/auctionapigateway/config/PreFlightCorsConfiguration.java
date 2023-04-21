@@ -27,11 +27,10 @@ public class PreFlightCorsConfiguration {
     private static final String ALLOWED_CREDENTIALS = "true";
 
     // 중요 해당 헤더가 없다면 axios를 통한 프론트에서 확인이 불가능함
-    private static final String EXPOSE_HEADERS = "*,Authorization,Refreshtoken," +
+    private static final String EXPOSE_HEADERS = "Authorization,Refreshtoken," +
             "ServerToken,Cookie";
 
     private static final String MAX_AGE = "3600";
-
 
     @Bean
     public WebFilter corsFilter() {
@@ -45,7 +44,6 @@ public class PreFlightCorsConfiguration {
                 ServerHttpResponse response = ctx.getResponse();
 
                 HttpHeaders headers = response.getHeaders();
-
 
                 headers.add("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
 
@@ -63,9 +61,7 @@ public class PreFlightCorsConfiguration {
                 if (request.getMethod() == HttpMethod.OPTIONS) {
                     response.setStatusCode(HttpStatus.OK);
                     return Mono.empty();
-
                 }
-
             }
 
             return chain.filter(ctx);

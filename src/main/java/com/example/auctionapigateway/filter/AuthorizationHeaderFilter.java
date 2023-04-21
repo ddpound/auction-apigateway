@@ -8,6 +8,7 @@ import com.example.modulecommon.jwtutil.JWTUtil;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.HttpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 
@@ -35,9 +36,11 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
     private final JwtSuperintendRepository jwtSuperintendRepository;
 
-    private final String JWT_COOKIE_NAME;
+    @Value("${myToken.cookieJWTName}")
+    private String JWT_COOKIE_NAME;
 
-    private final String REFRESH_COOKIE_NAME;
+    @Value("${myToken.refreshJWTCookieName}")
+    private String REFRESH_COOKIE_NAME;
 
     public static class Config{}
 
@@ -47,8 +50,6 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
         super(Config.class);
         this.jwtUtil = jwtUtil;
         this.jwtSuperintendRepository = jwtSuperintendRepository;
-        JWT_COOKIE_NAME = "token";
-        REFRESH_COOKIE_NAME = "refreshtoken";
     }
 
     @Override
@@ -56,9 +57,6 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
         return ((exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
             ServerHttpResponse response = exchange.getResponse();
-
-
-
 
             if(!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)){
                 return onError(exchange,"no authorization header", HttpStatus.UNAUTHORIZED);
@@ -74,13 +72,15 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
             }else{
                 log.info("API GATEWAY JWTCheckFilter has been activated.");
 
-                // 쿠키 추가부분
+                // 쿠키,검증하기
                 try {
                     Map<String, String> tokens = getTokenFromCookie(request);
                     System.out.println("쿠키토큰 결과값");
                     System.out.println(tokens.get(JWT_COOKIE_NAME));
                     System.out.println(tokens.get(REFRESH_COOKIE_NAME));
-                    System.out.println(tokens.values());
+
+                    System.out.println(jwtUtil.returnMapMyTokenVerify(tokens.get(JWT_COOKIE_NAME)).values());
+                    System.out.println(jwtUtil.returnMapMyTokenVerify(tokens.get(REFRESH_COOKIE_NAME)).values());
                 }catch (Exception e){
                     log.error(e);
                 }
@@ -175,27 +175,6 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
         HttpCookie cookie = request.getCookies().getFirst(JWT_COOKIE_NAME);
         HttpCookie Refreshcookies = request.getCookies().getFirst(REFRESH_COOKIE_NAME);
-
-        System.out.println("내가만든ㄱ쿠키~");
-        System.out.println(request);
-        System.out.println(request.getHeaders().values());
-        System.out.println(request.getMethod());
-        System.out.println(request.getCookies());
-        System.out.println();
-        request.getCookies().values().stream()
-                .map(httpCookies -> {
-                    return httpCookies.stream().map(httpCookie -> {
-                        String cookieName = httpCookie.getName();
-                        String cookieValue = cookie.getValue();
-                        System.out.println("회전값 작동 유무");
-                        System.out.println(cookieName);
-                        System.out.println(cookieValue);
-                        return null;
-                    });
-                });
-
-        System.out.println(Objects.requireNonNull(cookie).getValue());
-        System.out.println(Objects.requireNonNull(Refreshcookies).getValue());
 
 
         if (cookie != null) {
