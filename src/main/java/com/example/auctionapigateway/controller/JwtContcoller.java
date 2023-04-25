@@ -22,6 +22,13 @@ public class JwtContcoller {
         return "check controller";
     }
 
+    @GetMapping(value = "check-token")
+    public String checkCookieToken(HttpServletRequest request){
+
+
+        return "success checkToken";
+    }
+
     /**
      * 저장할 토큰을 먼저 검증하고 verify가 통과한다면
      * 수정과 저장을 진행합니다.

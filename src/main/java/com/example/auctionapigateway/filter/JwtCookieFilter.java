@@ -64,6 +64,9 @@ public class JwtCookieFilter extends AbstractGatewayFilterFactory<JwtCookieFilte
                 // JWT 토큰을 HttpOnly 쿠키에서 가져옵니다.
                 Map<String, String> tokens = getTokenFromCookie(request);
 
+                System.out.println(tokens);
+                System.out.println(tokens.values());
+
                 if(Objects.requireNonNull(tokens).isEmpty()){
                     return onError(exchange,"Sorry, cookies token null ", HttpStatus.UNAUTHORIZED);
                 }
@@ -101,10 +104,23 @@ public class JwtCookieFilter extends AbstractGatewayFilterFactory<JwtCookieFilte
                             // 리프레시가 검증 완료라면 새 토큰을 만들어주자
                             if(resultMapToken.containsKey(1)){
                                 HttpCookie cookie = request.getCookies().getFirst(JWT_COOKIE_NAME);
+                                HttpCookie idCookie = request.getCookies().getFirst(JWT_COOKIE_ID);
+
+                                ResponseCookie newCookie = newCookie(cookie,idCookie);
+                                String newToken = newCookie.getValue();
 
                                 // 변경된 쿠키를 다시 응답 헤더에 추가합니다.
-                                response.addCookie(newCookie(cookie));
-                                log.info("success checkfilter and new Token making");
+                                response.addCookie(newCookie);
+
+                                response.getHeaders().add(HttpHeaders.COOKIE,JWT_COOKIE_NAME+"="+newToken);
+
+                                response.getHeaders().add(JWT_COOKIE_NAME,newToken);
+
+                                response.getHeaders().set(JWT_COOKIE_NAME,newToken);
+
+                                exchange.getRequest().getCookies().set(HttpHeaders.SET_COOKIE, newCookie(cookie,idCookie));
+
+                                log.info("success checkfilter and new Token make");
                                 return chain.filter(exchange);
                             }
 
@@ -123,10 +139,23 @@ public class JwtCookieFilter extends AbstractGatewayFilterFactory<JwtCookieFilte
                         // 리프레시가 검증 완료라면 새 토큰을 만들어주자
                         if(resultMapToken.containsKey(1)){
                             HttpCookie cookie = request.getCookies().getFirst(JWT_COOKIE_NAME);
+                            HttpCookie idCookie = request.getCookies().getFirst(JWT_COOKIE_ID);
+
+                            ResponseCookie newCookie = newCookie(cookie,idCookie);
+                            String newToken = newCookie.getValue();
 
                             // 변경된 쿠키를 다시 응답 헤더에 추가합니다.
-                            response.addCookie(newCookie(cookie));
-                            log.info("success checkfilter and new Token making");
+                            response.addCookie(newCookie);
+
+                            response.getHeaders().add(HttpHeaders.COOKIE,JWT_COOKIE_NAME+"="+newToken);
+
+                            response.getHeaders().add(JWT_COOKIE_NAME,newToken);
+
+                            response.getHeaders().set(JWT_COOKIE_NAME,newToken);
+
+                            exchange.getRequest().getCookies().set(HttpHeaders.SET_COOKIE, newCookie(cookie,idCookie));
+
+                            log.info("made a new one because I don't have any JWT cookies.");
                             return chain.filter(exchange);
                         }
 
@@ -143,6 +172,7 @@ public class JwtCookieFilter extends AbstractGatewayFilterFactory<JwtCookieFilte
                 log.error("Error failed: " + e);
                 return onError(exchange,"Filter Error", HttpStatus.FORBIDDEN);
             }
+
             return onError(exchange,"Filter Error", HttpStatus.FORBIDDEN);
         });
 
@@ -156,41 +186,30 @@ public class JwtCookieFilter extends AbstractGatewayFilterFactory<JwtCookieFilte
         HttpCookie userIdCookie = request.getCookies().getFirst(JWT_COOKIE_ID);
 
         if (cookie != null) {
-
             returnHashMap.put(JWT_COOKIE_NAME, cookie.getValue());
-
-            if (Refreshcookies != null) {
-                returnHashMap.put(REFRESH_COOKIE_NAME, Refreshcookies.getValue());
-            }
-
-            if (userIdCookie != null) {
-                returnHashMap.put(JWT_COOKIE_ID, userIdCookie.getValue());
-            }
-
-            return returnHashMap;
         }
 
-        return null;
-    }
-
-    private ResponseCookie newCookie(HttpCookie cookie){
-        if (cookie != null) {
-            // 쿠키 생성
-            return ResponseCookie.from(JWT_COOKIE_NAME,
-                            jwtUtil.makeAuthToken(JWT.decode(cookie.getValue()).getClaim("userId").asInt()))
-                    .path("/")
-                    .maxAge(JWT_COOKIE_TIME)
-                    .httpOnly(true)
-                    .secure(false)
-                    .build();
+        if (Refreshcookies != null) {
+            returnHashMap.put(REFRESH_COOKIE_NAME, Refreshcookies.getValue());
         }
-        return null;
+
+        if (userIdCookie != null) {
+            returnHashMap.put(JWT_COOKIE_ID, userIdCookie.getValue());
+        }
+
+        return returnHashMap;
     }
 
-    private Map<String, String> newRefreshToken( Map<String, String> inputToken){
+    private ResponseCookie newCookie(HttpCookie cookie, HttpCookie idCookie){
 
-
-
+        // 쿠키 생성
+        return ResponseCookie.from(JWT_COOKIE_NAME,
+                        jwtUtil.makeAuthToken(Integer.parseInt(idCookie.getValue())))
+                .path("/")
+                .maxAge(JWT_COOKIE_TIME)
+                .httpOnly(true)
+                .secure(false)
+                .build();
     }
 
     private Mono<Void> onError(ServerWebExchange exchange, String errMassage, HttpStatus httpStatus) {

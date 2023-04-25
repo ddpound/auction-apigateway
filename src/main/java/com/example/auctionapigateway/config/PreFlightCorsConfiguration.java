@@ -1,5 +1,6 @@
 package com.example.auctionapigateway.config;
 
+import org.springframework.cloud.gateway.filter.headers.ForwardedHeadersFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -28,7 +29,7 @@ public class PreFlightCorsConfiguration {
 
     // 중요 해당 헤더가 없다면 axios를 통한 프론트에서 확인이 불가능함
     private static final String EXPOSE_HEADERS = "Authorization,Refreshtoken," +
-            "ServerToken,Cookie";
+            "ServerToken,Cookie,Set-Cookie,Cookie";
 
     private static final String MAX_AGE = "3600";
 
@@ -69,6 +70,5 @@ public class PreFlightCorsConfiguration {
         };
 
     }
-
 
 }
